@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chess Repertoire Pro: Architect</title>
+  <title>Chess Repertoire Architect Pro</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -51,45 +51,74 @@
 
       <!-- STAGE 3: Active Workspace -->
       <div id="screen-workspace" class="screen hidden">
-        <div class="screen-header">
-          <button id="back-to-stage2" class="back-btn">⬅</button>
+        <div class="workspace-nav">
+          <div class="workspace-header-row">
+            <button id="back-to-stage2" class="back-btn">⬅ Menu</button>
+            <div class="mode-tabs">
+              <button id="edit-mode-btn" class="tab-btn active">🔨 Edit</button>
+              <button id="test-mode-btn" class="tab-btn">🔥 Test</button>
+            </div>
+          </div>
           <div class="workspace-info">
             <h2 id="workspace-title">---</h2>
             <span id="workspace-sub">---</span>
           </div>
         </div>
 
-        <div class="ai-coach-panel">
-          <div id="ai-coach-output" class="coach-text">Initializing coach...</div>
+        <!-- TEST MODE PANEL -->
+        <div id="test-panel" class="test-card" style="display: none;">
+          <div class="test-metrics">
+            <div class="metric-badge">Accuracy: <span id="accuracy-display">100%</span></div>
+            <div class="metric-badge">Streak: <span id="streak-display">🔥 0</span></div>
+          </div>
+          <div class="status-bubble">
+            <p id="test-status-msg">Click "Start/Reset Test" to begin!</p>
+          </div>
+          <div class="test-actions">
+            <button id="reset-test-btn" class="primary-btn">Start / Reset Test</button>
+            <button id="hint-btn" class="secondary-btn">Show Hint</button>
+          </div>
         </div>
 
-        <div id="gap-analyzer-container" class="gap-panel hidden"></div>
-
-        <div class="dashboard-bar">
-          <div class="elo-container">
-            <label>Elo:</label>
-            <select id="elo-selector">
-              <option value="500">500</option>
-              <option value="800">800</option>
-              <option value="1000">1000</option>
-              <option value="1200">1200</option>
-              <option value="1500">1500</option>
-              <option value="1800">1800</option>
-              <option value="2000">2000</option>
-            </select>
+        <!-- BUILDER COMPONENTS (Hidden in Test Mode) -->
+        <div class="builder-components">
+          <!-- AI Coach -->
+          <div class="ai-coach-panel">
+            <div id="ai-coach-output" class="coach-text">Initializing coach...</div>
           </div>
-          <div class="eval-box"><span id="eval-score">0.0</span></div>
-        </div>
 
-        <div class="explorer-section">
-          <h3 id="opening-name">Starting Position</h3>
-          <div class="move-list-header">
-            <span>MOVE</span><span>MASTER%</span><span>CLUB%</span><span>EVAL</span>
+          <!-- Gap Analyzer -->
+          <div id="gap-analyzer-container" class="gap-panel hidden"></div>
+
+          <!-- Dashboard: Elo + Eval -->
+          <div class="dashboard-bar">
+            <div class="elo-container">
+              <label>Elo:</label>
+              <select id="elo-selector">
+                <option value="500">500</option>
+                <option value="800">800</option>
+                <option value="1000">1000</option>
+                <option value="1200">1200</option>
+                <option value="1500">1500</option>
+                <option value="1800">1800</option>
+                <option value="2000">2000</option>
+              </select>
+            </div>
+            <div class="eval-box"><span id="eval-score">0.0</span></div>
           </div>
-          <div id="move-list" class="move-list"></div>
+
+          <!-- Move Explorer -->
+          <div class="explorer-section">
+            <h3 id="opening-name">Starting Position</h3>
+            <div class="move-list-header">
+              <span>MOVE</span><span>MASTER%</span><span>CLUB%</span><span>EVAL</span>
+            </div>
+            <div id="move-list" class="move-list"></div>
+          </div>
         </div>
       </div>
 
+      <!-- Settings Section -->
       <details class="settings-panel">
         <summary>⚙️ API Credentials</summary>
         <div class="settings-content">
