@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess Repertoire Pro: Architect</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="app-wrapper">
+    <!-- Left Section: Board Area -->
+    <div id="board-area" class="board-container stage-locked">
+      <div id="board"></div>
+      <div class="board-controls">
+        <button id="undo-btn">Undo</button>
+        <button id="reset-btn">Reset</button>
+      </div>
+    </div>
+
+    <!-- Right Section: 3-Stage Sidebar -->
+    <div class="sidebar">
+      
+      <!-- STAGE 1: Color Selection -->
+      <div id="screen-color-select" class="screen">
+        <div class="screen-header"><h2>Repertoire Architect</h2></div>
+        <div class="menu-card">
+          <p class="hint">Choose a side to manage:</p>
+          <div class="menu-actions">
+            <button id="btn-build-white" class="btn-large white-btn">Manage White Repertoires</button>
+            <button id="btn-build-black" class="btn-large black-btn">Manage Black Repertoires</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAGE 2: Repertoire Manager -->
+      <div id="screen-rep-manage" class="screen hidden">
+        <div class="screen-header">
+          <button id="back-to-stage1" class="back-btn">⬅</button>
+          <h2 id="manage-title">White Repertoires</h2>
+        </div>
+        <div class="rep-list-container">
+          <div id="repertoire-list" class="rep-list"></div>
+          <div class="create-box">
+            <input type="text" id="new-rep-name" placeholder="New Repertoire Name...">
+            <button id="btn-create-rep">Create</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAGE 3: Active Workspace -->
+      <div id="screen-workspace" class="screen hidden">
+        <div class="screen-header">
+          <button id="back-to-stage2" class="back-btn">⬅</button>
+          <div class="workspace-info">
+            <h2 id="workspace-title">---</h2>
+            <span id="workspace-sub">---</span>
+          </div>
+        </div>
+
+        <div class="ai-coach-panel">
+          <div id="ai-coach-output" class="coach-text">Initializing coach...</div>
+        </div>
+
+        <div id="gap-analyzer-container" class="gap-panel hidden"></div>
+
+        <div class="dashboard-bar">
+          <div class="elo-container">
+            <label>Elo:</label>
+            <select id="elo-selector">
+              <option value="500">500</option>
+              <option value="800">800</option>
+              <option value="1000">1000</option>
+              <option value="1200">1200</option>
+              <option value="1500">1500</option>
+              <option value="1800">1800</option>
+              <option value="2000">2000</option>
+            </select>
+          </div>
+          <div class="eval-box"><span id="eval-score">0.0</span></div>
+        </div>
+
+        <div class="explorer-section">
+          <h3 id="opening-name">Starting Position</h3>
+          <div class="move-list-header">
+            <span>MOVE</span><span>MASTER%</span><span>CLUB%</span><span>EVAL</span>
+          </div>
+          <div id="move-list" class="move-list"></div>
+        </div>
+      </div>
+
+      <details class="settings-panel">
+        <summary>⚙️ API Credentials</summary>
+        <div class="settings-content">
+          <input type="password" id="lichess-token" placeholder="Lichess Token...">
+          <input type="password" id="gemini-api-key" placeholder="Gemini API Key...">
+          <button id="save-settings">Save Keys</button>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
