@@ -42,9 +42,18 @@
         </div>
         <div class="rep-list-container">
           <div id="repertoire-list" class="rep-list"></div>
-          <div class="create-box">
-            <input type="text" id="new-rep-name" placeholder="New Repertoire Name...">
-            <button id="btn-create-rep">Create</button>
+          
+          <!-- Modernized Create Section (Instruction 1 & 2) -->
+          <div class="create-section">
+            <button id="show-create-form-btn" class="add-rep-trigger">＋ Add Repertoire</button>
+            
+            <div id="create-rep-form" class="create-box hidden">
+              <input type="text" id="new-rep-name" placeholder="Repertoire Name (e.g. Sicilian Defense)">
+              <div class="create-actions">
+                <button id="btn-create-rep" class="confirm-btn">Create</button>
+                <button id="btn-cancel-rep" class="cancel-btn">Cancel</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -72,7 +81,7 @@
             <div class="metric-badge">Streak: <span id="streak-display">🔥 0</span></div>
           </div>
           <div class="status-bubble">
-            <p id="test-status-msg">Click "Start/Reset Test" to begin!</p>
+            <p id="test-status-msg">Click "Start/Reset Test" to begin testing your saved moves!</p>
           </div>
           <div class="test-actions">
             <button id="reset-test-btn" class="primary-btn">Start / Reset Test</button>
@@ -80,7 +89,7 @@
           </div>
         </div>
 
-        <!-- BUILDER COMPONENTS (Hidden in Test Mode) -->
+        <!-- BUILDER COMPONENTS -->
         <div class="builder-components">
           <!-- AI Coach -->
           <div class="ai-coach-panel">

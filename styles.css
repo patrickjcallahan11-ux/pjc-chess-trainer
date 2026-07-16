@@ -6,7 +6,7 @@
   --red: #ef4444;
   --green: #10b981;
   --text: #e0e0e0;
-  --dim: #555;
+  --text-dim: #777;
   --btn-bg: #2d2d30;
   --btn-border: #3f3f46;
 }
@@ -33,7 +33,7 @@ body {
 .screen-header h2 { margin: 0; font-size: 1rem; color: var(--accent); text-transform: uppercase; }
 .back-btn { background: #333; border: none; color: #fff; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
 
-/* Workspace Tabs */
+/* Tabs */
 .workspace-tabs { display: flex; gap: 10px; margin-bottom: 10px; }
 .tab-btn { flex: 1; background: #252525; border: 1px solid #333; color: #777; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
 .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
@@ -41,7 +41,7 @@ body {
 /* Switch Logic */
 .test-mode-active .builder-components { display: none !important; }
 
-/* Test Panel */
+/* Test Panel Styles */
 .test-card { display: flex; flex-direction: column; gap: 15px; background: #252525; padding: 20px; border-radius: 8px; border: 1px solid #333; }
 .test-metrics { display: flex; gap: 10px; }
 .metric-badge { flex: 1; background: #1a1a1a; padding: 10px; border-radius: 6px; text-align: center; font-weight: bold; font-size: 0.85rem; border: 1px solid #333; }
@@ -56,11 +56,32 @@ body {
 .btn-large { width: 100%; padding: 15px; margin-bottom: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
 .white-btn { background: #fff; color: #000; }
 .black-btn { background: #444; color: #fff; }
+
 .rep-list-container { background: #252525; padding: 15px; border-radius: 8px; flex-grow: 1; display: flex; flex-direction: column; }
 .rep-list { height: 250px; overflow-y: auto; margin-bottom: 15px; }
 .rep-item { display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; padding: 10px; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border-left: 3px solid transparent; }
 .rep-item:hover { border-color: var(--accent); }
 .delete-icon { color: var(--red); padding: 5px; cursor: pointer; }
+
+/* CREATE REPERTOIRE UI OVERHAUL (Instruction 3) */
+.create-section { border-top: 1px solid #333; padding-top: 15px; }
+.add-rep-trigger {
+  width: 100%; padding: 12px; background: transparent; border: 1px dashed var(--btn-border);
+  color: var(--text-dim); border-radius: 8px; cursor: pointer; transition: 0.2s; font-weight: bold;
+}
+.add-rep-trigger:hover { color: var(--accent); border-color: var(--accent); background: rgba(52, 152, 219, 0.05); }
+
+.create-box { display: flex; flex-direction: column; gap: 10px; padding: 10px; background: #1a1a1a; border-radius: 8px; border: 1px solid #333; }
+.create-box input {
+  background: #000; border: 1px solid #333; color: #fff; padding: 10px; border-radius: 6px; font-size: 0.85rem; outline: none;
+}
+.create-box input:focus { border-color: var(--accent); }
+.create-box input::placeholder { color: #555; }
+
+.create-actions { display: flex; gap: 8px; }
+.confirm-btn { flex: 2; background: var(--accent); color: white; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+.cancel-btn { flex: 1; background: #333; color: #aaa; border: none; padding: 8px; border-radius: 4px; cursor: pointer; }
+.cancel-btn:hover { color: #fff; background: #444; }
 
 .ai-coach-panel { background: #1a1a1a; padding: 12px; border-radius: 4px; border-left: 3px solid #8e44ad; font-size: 0.85rem; font-style: italic; color: #bbb; line-height: 1.4; margin-bottom: 10px; }
 .coach-text strong { color: #fff; font-weight: bold; }
@@ -89,3 +110,4 @@ body {
 #save-settings { background: #444; color: #fff; border: none; padding: 5px; border-radius: 3px; cursor: pointer; }
 
 .hidden { display: none !important; }
+.status-msg { padding: 30px 10px; text-align: center; font-style: italic; color: #444; }
