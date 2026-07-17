@@ -1,13 +1,13 @@
 /**
  * CHESS REPERTOIRE ARCHITECT - PRO ENGINE
  * logic: chess.js + chessboard.js
- * AI: gemini-3.1-flash-lite
+ * AI: gemini-3.1-flash-lite (Ultra-Concise Strategy Edition)
  */
 
 // --- 1. CRITICAL INITIALIZATION SEQUENCE ---
 let game = new Chess();
 let board = null;
-let playerColor = null; 
+let playerColor = null; // 'white' or 'black'
 let activeRepertoireName = null;
 let repertoires = { white: {}, black: {} };
 
@@ -117,7 +117,7 @@ async function updatePositionData() {
   fetchExplorerData(encodeURIComponent(requestFen), requestFen);
 }
 
-// --- 4. AI COACH (CLEAN TEMPLATE LITERALS) ---
+// --- 4. AI COACH (ULTRA-CONCISE TURN-BASED LOGIC) ---
 
 async function triggerCoach() {
   if (isTestMode) return;
@@ -130,6 +130,7 @@ async function triggerCoach() {
     return; 
   }
 
+  // Detect Context
   const userColor = playerColor ? (playerColor.charAt(0).toUpperCase() + playerColor.slice(1)) : 'White';
   const currentTurn = game.turn() === 'w' ? 'White' : 'Black';
   const moveHistory = game.history();
@@ -141,29 +142,29 @@ async function triggerCoach() {
   const activeElo = document.getElementById('elo-selector')?.value || '1000';
   const activePersona = document.getElementById('persona-select')?.value || 'club-coach';
 
-  const personaProfiles = {
-    'club-coach': "Gentle Club Coach: warm, encouraging, focus on piece safety and simple development rules.",
-    'brutal-gm': "Savage Grandmaster: witty, blunt, critical. Roast sub-optimal moves, then provide the cold master-level refutation.",
-    'tactical-ninja': "Tactical Ninja: hyper-focused on immediate tactical patterns like forks, pins, and calculation.",
-    'positional-sage': "Positional Sage: strategic advisor. Focus on pawn structures, weak squares, and long-term plans."
-  };
-  const profile = personaProfiles[activePersona] || personaProfiles['club-coach'];
-
+  // [INSTRUCTION 2: CONDENSED SCENARIO PROMPTS]
   let promptText = "";
 
   if (isGameStart) {
-    promptText = `You are a chess coach with the ${activePersona} persona. Profile: ${profile}. The game has not started. You are coaching the ${userColor} player at Elo ${activeElo}. Recommend a strong opening move for ${userColor} and explain the strategy in 2 sentences.`;
+    // SCENARIO A: Game Start
+    promptText = `You are a chess coach with the ${activePersona} personality. You are coaching the ${userColor} player. The game has not started yet. Do not say hello. Recommend the absolute best first move for ${userColor} and state its main strategic purpose in 1 clear, direct sentence.`;
   } else if (isUserTurn) {
-    promptText = `You are a chess coach with the ${activePersona} persona. Profile: ${profile}. You are coaching the ${userColor} player at Elo ${activeElo}. It is their turn. The opponent just played: ${lastMove}. Current FEN: ${currentFen}. Analyze the opponent move and coach the ${userColor} player on the best response and why. Adhere to the 30 percent persona tone, 70 percent sound strategy rule.`;
+    // SCENARIO B: User Turn
+    promptText = `You are a chess coach with the ${activePersona} personality. You are coaching the ${userColor} player. The opponent just played: '${lastMove}'. FEN: '${currentFen}'. Do not say hello or use filler. In 1 or 2 short sentences max, state the immediate threat of '${lastMove}' and the absolute best move/plan for ${userColor} to play right now. Keep it punchy and direct.`;
   } else {
-    promptText = `You are a chess coach with the ${activePersona} persona. Profile: ${profile}. You are coaching the ${userColor} player at Elo ${activeElo}. They just played: ${lastMove}. FEN: ${currentFen}. Do not suggest a move for ${userColor}. Explain what the opponent is likely thinking and what ${userColor} should watch out for next. Use the 30 percent persona, 70 percent strategy rule.`;
+    // SCENARIO C: Opponent Turn
+    promptText = `You are a chess coach with the ${activePersona} personality. You are coaching the ${userColor} player, who just played: '${lastMove}'. It is now the opponent's turn. FEN: '${currentFen}'. Do not say hello, validate the user's move with generic praise, or suggest a move for the user. In 1 or 2 short sentences max, state the opponent's most likely response/threat and what candidate moves ${userColor} should prepare to play next.`;
   }
+
+  coachElement.textContent = "Thinking...";
 
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${cleanKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: promptText }] }]
+      })
     });
 
     if (!res.ok) {
@@ -175,12 +176,15 @@ async function triggerCoach() {
     const coachText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (coachText && game.fen() === currentFen) {
+      // Regex Markdown bolding filter
       const formatted = coachText.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
-      $(coachElement).fadeOut(200, function() { $(this).html(formatted).fadeIn(200); });
+      $(coachElement).fadeOut(200, function() { 
+          $(this).html(formatted).fadeIn(200); 
+      });
     }
   } catch (e) { 
     console.error("Coach API Error:", e);
-    if (game.fen() === currentFen) coachElement.textContent = "Coach is temporarily unavailable.";
+    if (game.fen() === currentFen) coachElement.textContent = "Coach unavailable.";
   }
 }
 
@@ -214,12 +218,8 @@ function renderMoveTable() {
 
 function analyzeBlindSpots(candidateMoves) {
   const $gap = $('#gap-analyzer-container');
-  
-  // Instruction 1: Explicitly reset container state and clear content
-  $gap.addClass('hidden').empty();
-  $gap.removeClass('gap-warning gap-success');
+  $gap.addClass('hidden').empty().removeClass('gap-warning gap-success');
 
-  // Guard for opponent turn and active session
   const isOpponentTurn = game.turn() !== playerColor[0];
   if (!isOpponentTurn || isTestMode || !playerColor) return;
 
@@ -227,21 +227,18 @@ function analyzeBlindSpots(candidateMoves) {
     const t = new Chess(game.fen());
     t.move(move.san);
     const nextKey = getRepertoireKey(t.fen());
-    // Check if we have a saved reply for this specific opponent move result
     return !repertoires[playerColor]?.[activeRepertoireName]?.[nextKey];
   });
 
   if (blindSpots.length > 0) {
-    // Instruction 1.1: State there are gaps
     $gap.removeClass('hidden gap-success').addClass('gap-warning');
-    $gap.append('<div class="gap-header">Warning: Position Blind Spots</div>');
+    $gap.append('<div class="gap-header">⚠️ Blind Spots</div>');
     blindSpots.forEach(m => {
       $gap.append(`<button class="gap-item" onclick="handleExplorerMove('${m.san}')">${m.cPct}% reply ${m.san}. Need response!</button>`);
     });
   } else if (candidateMoves.length > 0) {
-    // Instruction 1.2: State 100 percent coverage
     $gap.removeClass('hidden gap-warning').addClass('gap-success');
-    $gap.html('<div class="gap-header">Success: 100 Percent Covered!</div>');
+    $gap.html('<div class="gap-header">✅ 100% Covered!</div>');
   }
 }
 
@@ -434,7 +431,7 @@ $(document).ready(function() {
   $('#reset-test-btn').on('click', initTest);
   $('#hint-btn').on('click', handleHint);
 
-  // Undo and Reset logic (Instruction 1 Restore)
+  // Undo and Reset
   $('#undo-btn').on('click', () => { 
     game.undo(); 
     board.position(game.fen()); 
@@ -450,7 +447,7 @@ $(document).ready(function() {
   // Repertoire Creation
   $('#btn-create-rep').on('click', () => {
     const name = $('#new-rep-name').val().trim();
-    if (!name || (repertoires[playerColor] && repertoires[playerColor][name])) return alert("Invalid or Duplicate Name");
+    if (!name || (repertoires[playerColor] && repertoires[playerColor][name])) return alert("Invalid Name");
     if (!repertoires[playerColor]) repertoires[playerColor] = {};
     repertoires[playerColor][name] = {};
     localStorage.setItem('chess_repertoires_v2', JSON.stringify(repertoires));
@@ -458,16 +455,16 @@ $(document).ready(function() {
     renderRepertoireList();
   });
 
-  // Settings Handler
+  // Settings
   $('#save-settings').on('click', () => {
     localStorage.setItem('lichess_token', $('#lichess-token').val().trim());
     localStorage.setItem('gemini_api_key', $('#gemini-api-key').val().trim());
     localStorage.setItem('player_elo', $('#elo-selector').val());
-    alert("Credentials Saved!"); 
+    alert("Saved!"); 
     location.reload();
   });
 
-  // Dynamic selector triggers
+  // Select Triggers
   $('#elo-selector, #persona-select').on('change', function() {
     triggerCoach();
   });
