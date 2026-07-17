@@ -6,7 +6,7 @@
   --red: #ef4444;
   --green: #10b981;
   --text: #e0e0e0;
-  --text-dim: #777;
+  --dim: #777;
   --btn-bg: #2d2d30;
   --btn-border: #3f3f46;
 }
@@ -79,6 +79,7 @@ body {
 .move-list-header { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; font-size: 0.65rem; color: #444; font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 5px; }
 .move-list { height: 180px; overflow-y: auto; }
 .move-row { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; align-items: center; padding: 8px 0; border-bottom: 1px solid #2a2a2a; }
+.badge-container { display: flex; align-items: center; gap: 8px; }
 .move-btn { background: #2d2d30; border: 1px solid #3f3f46; color: #fff; padding: 4px 10px; border-radius: 6px; font-family: monospace; cursor: pointer; font-size: 0.85rem; }
 .repertoire-move .move-btn { border-color: var(--gold); background: rgba(245, 158, 11, 0.05); }
 .star-btn { cursor: pointer; font-size: 1.1rem; color: #333; margin-right: 5px; }

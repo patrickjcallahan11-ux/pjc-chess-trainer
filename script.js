@@ -7,15 +7,17 @@
 // --- 1. CRITICAL INITIALIZATION SEQUENCE ---
 let game = new Chess();
 let board = null;
-let playerColor = null; // 'white' or 'black'
+let playerColor = null; 
 let activeRepertoireName = null;
 let repertoires = { white: {}, black: {} };
 
+// Memory Gauntlet State
 let isTestMode = false;
 let correctMovesCount = 0;
 let totalMovesCount = 0;
 let testStreak = 0;
 
+// LocalStorage Defensive Loader
 try {
   const saved = localStorage.getItem('chess_repertoires_v2');
   if (saved) {
@@ -24,28 +26,31 @@ try {
     if (!repertoires.black) repertoires.black = {};
   }
 } catch (e) {
-  console.error("Database load error.", e);
+  console.error("Database parsing failed. Resetting.", e);
   repertoires = { white: {}, black: {} };
 }
 
+// Global Tracking
 let currentActiveFen = ''; 
 let cachedMovesData = []; 
 let lToken = localStorage.getItem('lichess_token') || '';
 let gKey = localStorage.getItem('gemini_api_key') || '';
 let playerElo = localStorage.getItem('player_elo') || '1000';
 
+// FEN Utility Helper
 const getRepertoireKey = (customFen) => {
   const target = customFen || game.fen();
   return target.split(' ').slice(0, 4).join(' ');
 };
 
-// --- 2. STAGE NAVIGATION ---
+// --- 2. STAGE NAVIGATION & MODES ---
 
 function navToStage1() {
   $('.screen').addClass('hidden');
   $('#screen-color-select').removeClass('hidden');
   $('#board-area').addClass('stage-locked');
-  playerColor = null; isTestMode = false;
+  playerColor = null; 
+  isTestMode = false;
 }
 
 function navToStage2(side) {
@@ -63,8 +68,10 @@ function navToStage3(name) {
   $('.screen').addClass('hidden');
   $('#screen-workspace').removeClass('hidden');
   $('#board-area').removeClass('stage-locked');
+  
   $('#workspace-title').text(name);
   $('#workspace-sub').text(`${playerColor.toUpperCase()} WORKSPACE`);
+  
   switchMode('edit');
 }
 
@@ -79,7 +86,9 @@ function switchMode(mode) {
   } else {
     $('#screen-workspace').removeClass('test-mode-active');
     document.getElementById('test-panel').style.display = 'none';
-    game.reset(); board.start(); board.orientation(playerColor);
+    game.reset(); 
+    board.start(); 
+    board.orientation(playerColor);
     updatePositionData();
   }
 }
@@ -108,60 +117,85 @@ async function updatePositionData() {
   fetchExplorerData(encodeURIComponent(requestFen), requestFen);
 }
 
-// --- 4. AI COACH (PERSPECTIVE & START LOGIC) ---
+// --- 4. AI COACH (CLEAN TEMPLATE LITERALS) ---
 
 async function triggerCoach() {
   if (isTestMode) return;
   const coachElement = document.getElementById('ai-coach-output');
   if (!coachElement) return;
-  if (!gKey.trim()) { coachElement.textContent = "Enter Gemini Key in Settings."; return; }
-
-  // Context gathering
-  const userColor = playerColor.charAt(0).toUpperCase() + playerColor.slice(1);
-  const moveHistory = game.history();
-  const isGameStart = moveHistory.length === 0;
-  const currentFen = game.fen();
-  const activeElo = document.getElementById('elo-selector')?.value || '1000';
-  const activePersona = document.getElementById('persona-select')?.value || 'club-coach';
-  const lastMove = moveHistory.length > 0 ? moveHistory[moveHistory.length - 1] : 'None';
-
-  let personaPrompt = "";
-  switch(activePersona) {
-    case 'club-coach': personaPrompt = "Gentle Club Coach: warm, encouraging, focus on safety and development."; break;
-    case 'brutal-gm': personaPrompt = "Savage Grandmaster: witty, blunt, critical GM. Roast mistakes, then provide cold refutation and best master line."; break;
-    case 'tactical-ninja': personaPrompt = "Tactical Ninja: hyper-focused on patterns, calculation, and immediate threats."; break;
-    case 'positional-sage': personaPrompt = "Positional Sage: strategic, long-term pawn structures and space."; break;
+  
+  const cleanKey = gKey.trim();
+  if (!cleanKey) { 
+    coachElement.textContent = "Please enter your API Key in the settings below to activate your coach!"; 
+    return; 
   }
 
-  let promptText = isGameStart 
-    ? `Persona: ${personaPrompt}. The game has NOT started. Position: starting. User: ${userColor}. Introduce yourself in persona style, recommend a thematic opening for ${userColor}, and explain why in 2 sentences.`
-    : `Persona: ${personaPrompt}. Coaching: ${userColor}. FEN: ${currentFen}. Last move: ${lastMove}. Analyze for ${userColor} only. 30% persona flavor, 70% sound strategy. State best move and why. Under 60 words. Bold (**) moves/squares.`;
+  const userColor = playerColor ? (playerColor.charAt(0).toUpperCase() + playerColor.slice(1)) : 'White';
+  const currentTurn = game.turn() === 'w' ? 'White' : 'Black';
+  const moveHistory = game.history();
+  const isGameStart = moveHistory.length === 0;
+  const isUserTurn = (userColor === currentTurn);
+  
+  const currentFen = game.fen();
+  const lastMove = moveHistory.length > 0 ? moveHistory[moveHistory.length - 1] : 'None';
+  const activeElo = document.getElementById('elo-selector')?.value || '1000';
+  const activePersona = document.getElementById('persona-select')?.value || 'club-coach';
+
+  const personaProfiles = {
+    'club-coach': "Gentle Club Coach: warm, encouraging, focus on piece safety and simple development rules.",
+    'brutal-gm': "Savage Grandmaster: witty, blunt, critical. Roast sub-optimal moves, then provide the cold master-level refutation.",
+    'tactical-ninja': "Tactical Ninja: hyper-focused on immediate tactical patterns like forks, pins, and calculation.",
+    'positional-sage': "Positional Sage: strategic advisor. Focus on pawn structures, weak squares, and long-term plans."
+  };
+  const profile = personaProfiles[activePersona] || personaProfiles['club-coach'];
+
+  let promptText = "";
+
+  if (isGameStart) {
+    promptText = `You are a chess coach with the ${activePersona} persona. Profile: ${profile}. The game has not started. You are coaching the ${userColor} player at Elo ${activeElo}. Recommend a strong opening move for ${userColor} and explain the strategy in 2 sentences.`;
+  } else if (isUserTurn) {
+    promptText = `You are a chess coach with the ${activePersona} persona. Profile: ${profile}. You are coaching the ${userColor} player at Elo ${activeElo}. It is their turn. The opponent just played: ${lastMove}. Current FEN: ${currentFen}. Analyze the opponent move and coach the ${userColor} player on the best response and why. Adhere to the 30 percent persona tone, 70 percent sound strategy rule.`;
+  } else {
+    promptText = `You are a chess coach with the ${activePersona} persona. Profile: ${profile}. You are coaching the ${userColor} player at Elo ${activeElo}. They just played: ${lastMove}. FEN: ${currentFen}. Do not suggest a move for ${userColor}. Explain what the opponent is likely thinking and what ${userColor} should watch out for next. Use the 30 percent persona, 70 percent strategy rule.`;
+  }
 
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${gKey.trim()}`, {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${cleanKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
     });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error?.message || `HTTP ${res.status}`);
+    }
+
     const data = await res.json();
     const coachText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
     if (coachText && game.fen() === currentFen) {
       const formatted = coachText.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
       $(coachElement).fadeOut(200, function() { $(this).html(formatted).fadeIn(200); });
     }
-  } catch (e) { console.error(e); }
+  } catch (e) { 
+    console.error("Coach API Error:", e);
+    if (game.fen() === currentFen) coachElement.textContent = "Coach is temporarily unavailable.";
+  }
 }
 
-// --- 5. DATA RENDERING & LOGIC ---
+// --- 5. UI DATA RENDERING & BLIND SPOT ANALYZER ---
 
 function renderMoveTable() {
   const $list = $('#move-list');
-  const savedMove = repertoires[playerColor]?.[activeRepertoireName]?.[getRepertoireKey()] || null;
+  const fenKey = getRepertoireKey();
+  const savedMove = repertoires[playerColor]?.[activeRepertoireName]?.[fenKey] || null;
   const isUserTurn = game.turn() === playerColor[0];
 
   if (cachedMovesData.length === 0) {
     $list.html('<div class="status-msg">End of theory.</div>');
-    analyzeBlindSpots([]); return;
+    analyzeBlindSpots([]); 
+    return;
   }
 
   $list.empty();
@@ -178,8 +212,45 @@ function renderMoveTable() {
   analyzeBlindSpots(cachedMovesData);
 }
 
+function analyzeBlindSpots(candidateMoves) {
+  const $gap = $('#gap-analyzer-container');
+  
+  // Instruction 1: Explicitly reset container state and clear content
+  $gap.addClass('hidden').empty();
+  $gap.removeClass('gap-warning gap-success');
+
+  // Guard for opponent turn and active session
+  const isOpponentTurn = game.turn() !== playerColor[0];
+  if (!isOpponentTurn || isTestMode || !playerColor) return;
+
+  const blindSpots = candidateMoves.filter(m => m.cPct >= 15).filter(move => {
+    const t = new Chess(game.fen());
+    t.move(move.san);
+    const nextKey = getRepertoireKey(t.fen());
+    // Check if we have a saved reply for this specific opponent move result
+    return !repertoires[playerColor]?.[activeRepertoireName]?.[nextKey];
+  });
+
+  if (blindSpots.length > 0) {
+    // Instruction 1.1: State there are gaps
+    $gap.removeClass('hidden gap-success').addClass('gap-warning');
+    $gap.append('<div class="gap-header">Warning: Position Blind Spots</div>');
+    blindSpots.forEach(m => {
+      $gap.append(`<button class="gap-item" onclick="handleExplorerMove('${m.san}')">${m.cPct}% reply ${m.san}. Need response!</button>`);
+    });
+  } else if (candidateMoves.length > 0) {
+    // Instruction 1.2: State 100 percent coverage
+    $gap.removeClass('hidden gap-warning').addClass('gap-success');
+    $gap.html('<div class="gap-header">Success: 100 Percent Covered!</div>');
+  }
+}
+
+// --- 6. CORE HANDLERS & AUTO-SAVE ---
+
 const config = {
-  draggable: true, position: 'start', pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+  draggable: true, 
+  position: 'start', 
+  pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
   onDrop: (source, target) => {
     const beforeKey = getRepertoireKey();
     const currentTurn = game.turn();
@@ -193,11 +264,13 @@ const config = {
         setTimeout(playOpponentTestMove, 600);
       } else {
         game.undo(); totalMovesCount++; testStreak = 0;
-        updateTestUI(`❌ Incorrect! Expected: ${expected || 'None'}`, "error"); return 'snapback';
+        updateTestUI(`❌ Incorrect! Expected: ${expected || 'None'}`, "error"); 
+        return 'snapback';
       }
     } else {
       const wasUser = currentTurn === playerColor[0];
       if (activeRepertoireName && wasUser) {
+        if (!repertoires[playerColor][activeRepertoireName]) repertoires[playerColor][activeRepertoireName] = {};
         repertoires[playerColor][activeRepertoireName][beforeKey] = move.san;
         localStorage.setItem('chess_repertoires_v2', JSON.stringify(repertoires));
       }
@@ -218,7 +291,7 @@ function playOpponentTestMove() {
   const legal = game.moves();
   const playable = legal.filter(m => {
     const t = new Chess(game.fen()); t.move(m);
-    return repertoires[playerColor][activeRepertoireName][getRepertoireKey(t.fen())];
+    return repertoires[playerColor]?.[activeRepertoireName]?.[getRepertoireKey(t.fen())];
   });
   if (playable.length > 0) {
     const chosen = playable[Math.floor(Math.random() * playable.length)];
@@ -231,28 +304,20 @@ function playOpponentTestMove() {
 
 function updateTestUI(msg, status) {
   $('#test-status-msg').text(msg);
-  const acc = totalMovesCount === 0 ? 100 : Math.round((correctMovesCount/totalMovesCount)*100);
+  const acc = totalMovesCount === 0 ? 100 : Math.round((correctMovesCount / totalMovesCount) * 100);
   $('#accuracy-display').text(`${acc}% (${correctMovesCount}/${totalMovesCount})`);
   $('#streak-display').text(`🔥 ${testStreak}`);
 }
 
-function analyzeBlindSpots(candidateMoves) {
-  const $gap = $('#gap-analyzer-container').addClass('hidden').empty();
-  const isOpponentTurn = game.turn() !== playerColor[0];
-  if (!isOpponentTurn || isTestMode) return;
-  const blindSpots = candidateMoves.filter(m => m.cPct >= 15).filter(move => {
-    const t = new Chess(game.fen()); t.move(move.san);
-    return !repertoires[playerColor][activeRepertoireName][getRepertoireKey(t.fen())];
-  });
-  if (blindSpots.length > 0) {
-    $gap.removeClass('hidden').addClass('gap-warning').append('<div class="gap-header">⚠️ Blind Spots</div>');
-    blindSpots.forEach(m => $gap.append(`<button class="gap-item" onclick="handleExplorerMove('${m.san}')">${m.cPct}% reply ${m.san}. Need response!</button>`));
-  } else if (candidateMoves.length > 0) {
-    $gap.removeClass('hidden').addClass('gap-success').html('<div class="gap-header">✅ 100% Covered!</div>');
+function handleHint() {
+  const key = getRepertoireKey();
+  const expected = repertoires[playerColor]?.[activeRepertoireName]?.[key];
+  if (expected) {
+    $('#test-status-msg').text(`Hint: Your saved move is ${expected}.`);
   }
 }
 
-// --- 6. DATA FETCHING (Instruction 2: Fixed Opening Name logic) ---
+// --- 7. DATA FETCHING ---
 
 async function fetchCurrentEval(encodedFen, requestFen) {
   try {
@@ -272,17 +337,14 @@ async function fetchExplorerData(encodedFen, requestFen) {
     ]);
     
     if (game.fen() !== requestFen) return;
-    
     const mData = mRes.ok ? await mRes.json() : { moves: [] }; 
     const cData = cRes.ok ? await cRes.json() : { moves: [] };
 
-    // Instruction 2: Update the opening name display dynamically
     const $openingHeader = $('#opening-name-display');
     if (game.history().length === 0) {
-        $openingHeader.text("Starting Position");
+      $openingHeader.text("Starting Position");
     } else {
-        const openingName = mData?.opening?.name || cData?.opening?.name || "Open Analysis";
-        $openingHeader.text(openingName);
+      $openingHeader.text(mData?.opening?.name || cData?.opening?.name || "Open Analysis");
     }
 
     const tM = (mData.white || 0) + (mData.draws || 0) + (mData.black || 0);
@@ -304,10 +366,10 @@ async function fetchExplorerData(encodedFen, requestFen) {
     });
     
     Promise.all(evalPromises).then(() => { 
-        if (game.fen() === requestFen) { 
-            renderMoveTable(); 
-            triggerCoach(); 
-        } 
+      if (game.fen() === requestFen) { 
+        renderMoveTable(); 
+        triggerCoach(); 
+      } 
     });
   } catch (e) { console.error(e); }
 }
@@ -326,50 +388,89 @@ function renderRepertoireList() {
     item.on('click', () => navToStage3(name));
     item.find('.delete-icon').on('click', (e) => {
       e.stopPropagation();
-      if (confirm(`Delete "${name}"?`)) { delete repertoires[playerColor][name]; localStorage.setItem('chess_repertoires_v2', JSON.stringify(repertoires)); renderRepertoireList(); }
+      if (confirm(`Delete "${name}"?`)) { 
+        delete repertoires[playerColor][name]; 
+        localStorage.setItem('chess_repertoires_v2', JSON.stringify(repertoires)); 
+        renderRepertoireList(); 
+      }
     });
     list.append(item);
   });
 }
 
-// --- 7. BINDINGS ---
+// --- 8. BINDINGS & EVENT LISTENERS ---
 
 window.handleStarClick = (e, m) => {
-  e.stopPropagation(); const key = getRepertoireKey();
+  e.stopPropagation(); 
+  const key = getRepertoireKey();
+  if (!repertoires[playerColor][activeRepertoireName]) repertoires[playerColor][activeRepertoireName] = {};
   const rep = repertoires[playerColor][activeRepertoireName];
   if (rep[key] === m) delete rep[key]; else rep[key] = m;
-  localStorage.setItem('chess_repertoires_v2', JSON.stringify(repertoires)); renderMoveTable();
+  localStorage.setItem('chess_repertoires_v2', JSON.stringify(repertoires)); 
+  renderMoveTable();
 };
 
-window.handleExplorerMove = (san) => { if (game.move(san)) { board.position(game.fen()); updatePositionData(); } };
+window.handleExplorerMove = (san) => { 
+  if (game.move(san)) { 
+    board.position(game.fen()); 
+    updatePositionData(); 
+  } 
+};
 
 $(document).ready(function() {
   board = Chessboard('board', config);
+
+  // Stage Navigation
   $('#btn-build-white').on('click', () => navToStage2('white'));
   $('#btn-build-black').on('click', () => navToStage2('black'));
   $('#back-to-stage1').on('click', navToStage1);
   $('#back-to-stage2').on('click', () => navToStage2(playerColor));
   $('#show-create-form-btn').on('click', () => toggleCreateForm(true));
   $('#btn-cancel-rep').on('click', () => toggleCreateForm(false));
+
+  // Workspace Mode Toggles
   $('#edit-mode-btn').on('click', () => switchMode('edit'));
   $('#test-mode-btn').on('click', () => switchMode('test'));
   $('#reset-test-btn').on('click', initTest);
   $('#hint-btn').on('click', handleHint);
-  $('#undo-btn').on('click', () => { game.undo(); board.position(game.fen()); updatePositionData(); });
-  $('#reset-btn').on('click', () => { game.reset(); board.start(); updatePositionData(); });
+
+  // Undo and Reset logic (Instruction 1 Restore)
+  $('#undo-btn').on('click', () => { 
+    game.undo(); 
+    board.position(game.fen()); 
+    updatePositionData(); 
+  });
+
+  $('#reset-btn').on('click', () => { 
+    game.reset(); 
+    board.start(); 
+    updatePositionData(); 
+  });
+
+  // Repertoire Creation
   $('#btn-create-rep').on('click', () => {
     const name = $('#new-rep-name').val().trim();
-    if (!name || (repertoires[playerColor] && repertoires[playerColor][name])) return alert("Invalid Name");
+    if (!name || (repertoires[playerColor] && repertoires[playerColor][name])) return alert("Invalid or Duplicate Name");
     if (!repertoires[playerColor]) repertoires[playerColor] = {};
     repertoires[playerColor][name] = {};
     localStorage.setItem('chess_repertoires_v2', JSON.stringify(repertoires));
-    toggleCreateForm(false); renderRepertoireList();
+    toggleCreateForm(false); 
+    renderRepertoireList();
   });
+
+  // Settings Handler
   $('#save-settings').on('click', () => {
     localStorage.setItem('lichess_token', $('#lichess-token').val().trim());
     localStorage.setItem('gemini_api_key', $('#gemini-api-key').val().trim());
     localStorage.setItem('player_elo', $('#elo-selector').val());
-    alert("Saved!"); location.reload();
+    alert("Credentials Saved!"); 
+    location.reload();
   });
+
+  // Dynamic selector triggers
+  $('#elo-selector, #persona-select').on('change', function() {
+    triggerCoach();
+  });
+
   navToStage1();
 });
